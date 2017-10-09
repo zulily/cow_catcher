@@ -60,7 +60,7 @@ Note: the `tests/cowcatcher_tests.py` test suite requires configuration to succe
 1. Create/use a test Account in AWS to use for validation. Ensure your current AWS credentials give you full access to that account.
 2. Create a S3 test bucket in your test account, with credentials for read/write access by the current user. Copy the `ec2_TeamFoo_test.json` file from the `tests` subdirectory to that test bucket.
 2. Modify the `cowcatcher_tests.py` file to set the `Bucket` class variable value to your S3 test bucket name.
-3. Ensure there is an EC2 instance running in your test account, tagged with keys that are identified in the `CowKeyChecklist`.  If you automatically tag your instances (best practice), substitute your keys' key names for the `REPLACE_KEY1` and `REPLACE_KEY2` variables in the `cowinfo_helper()` of the .
+3. Ensure there is an EC2 instance running in your test account, tagged with keys that are identified in the `CowKeyChecklist`.  If you automatically tag your instances (best practice), substitute your keys' key names for the `REPLACE_KEY1` and `REPLACE_KEY2` variables in the `cowinfo_helper()` method of the `cowcatcher_tests.py` file.
 4. Create an SNS topic in your test Account (email), then use that `Topic ARN` as the value of the `CowReportARN` variable in the `cowcatcher_tests.py` file.
 
  
