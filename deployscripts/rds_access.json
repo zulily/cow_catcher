@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+	"rds:DeleteDBCluster",
+	"rds:DeleteDBInstance",
+        "rds:DescribeDBClusters",
+        "rds:DescribeDBInstances",
+	"rds:ListTagsForResource",
+        "rds:ModifyDBCluster",
+        "rds:ModifyDBInstance"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

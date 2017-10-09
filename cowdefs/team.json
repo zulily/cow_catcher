@@ -1,0 +1,16 @@
+{
+  "Bucket" : "cows-company-production-TeamFoo",
+  "Team" : "TeamFoo",
+  "Description" : "Definitions of CowCatcher for TeamFoo",
+  "zumocoTeamTemplateFormatVersion" : "2017-07-17",
+
+  "Debug" : false,
+
+  "CreateTeamReport" : true,
+
+  "CowDefs" : [
+	 "ec2_TeamFoo.json",
+         "rds_TeamFoo.json",
+	 "as_TeamFoo.json"
+  ]
+}

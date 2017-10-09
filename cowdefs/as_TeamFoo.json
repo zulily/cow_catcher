@@ -1,0 +1,30 @@
+{
+  "Service" : "autoscaling",
+  "Description" : "Definitions for Team's CowCatcher of the given Service",
+  "cowTemplateFormatVersion" : "2017-07-17",
+
+  "S3Suffix" : "TeamFoo",
+  "DiscoverInstance" : "describe_auto_scaling_groups", 
+  "InstanceFilters" : null,
+  "InstanceIterator1" : "AutoScalingGroups",
+  "InstanceIterator2" : null,
+
+  "InstanceId" : "AutoScalingGroupName",
+  "TagsKey" : "Tags",
+
+  "InstType" : null,
+  "InstStateParent" : "Instances",
+  "InstStateChild" : "LifecycleState",
+
+  "DiscoverTags": null,
+  "DiscoverTagsInstParm" : null,
+
+  "CowKeyChecklist" : ["REPLACE_KEY1", "REPLACE_KEY2"],
+  "CowActions" : [{"action": "terminate", "time_delta" : "-2 months",
+                   "api_pre": "delete_auto_scaling_group(AutoScalingGroupName=['",
+                   "api_post": "'])"},
+                  {"action": "report", "time_delta" : "-1 day",
+                   "api_pre": null, "api_post": null}],
+  "CreateServiceReport" : false,
+  "CowReportARN" : "arn:aws:sns:REPLACE_REGION:REPLACE_ACCOUNT:CowReport"
+}

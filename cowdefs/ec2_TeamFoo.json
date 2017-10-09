@@ -1,0 +1,34 @@
+{
+  "Service" : "ec2",
+  "Description" : "Definitions for Team's CowCatcher of the given Service",
+  "cowTemplateFormatVersion" : "2017-07-17",
+
+  "S3Suffix" : "TeamFoo",
+  "DiscoverInstance" : "describe_instances", 
+  "InstanceFilters" : "Filters=[]",
+  "InstanceIterator1" : "Reservations",
+  "InstanceIterator2" : "Instances",
+
+  "InstanceId" : "InstanceId",
+  "TagsKey" : "Tags",
+
+  "InstType" : "InstanceType",
+  "InstStateParent" : "State",
+  "InstStateChild" : "Name",
+
+  "DiscoverTags": null,
+  "DiscoverTagsInstParm" : null,
+
+  "CowKeyChecklist" : ["REPLACE_KEY1", "REPLACE_KEY2"],
+  "CowActions" : [{"action": "terminate", "time_delta" : "-5 weeks",
+                   "api_pre": "terminate_instances(InstanceIds=['",
+		   "api_post": "'])"},
+	          {"action": "stop", "time_delta" : "-4 weeks", 
+                   "api_pre": "stop_instances(InstanceIds=['",
+		   "api_post": "'])"},
+	          {"action": "report", "time_delta" : "-1 day", 
+	           "api_pre": null, "api_post": null}],
+  "CreateServiceReport" : false,
+  "CowReportARN" : "arn:aws:sns:REPLACE_REGION:REPLACE_ACCOUNT:CowReport"
+
+}
