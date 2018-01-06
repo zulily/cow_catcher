@@ -3,11 +3,17 @@
   "Statement": [
     {
       "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::cows-*"]
+    },
+    {
+      "Effect": "Allow",
       "Action": [
         "s3:GetObject",
-        "s3:PutObject"
+        "s3:PutObject",
+        "s3:DeleteObject"
       ],
-      "Resource": "arn:aws:s3:::cows-*"
+      "Resource": "arn:aws:s3:::cows-*/*"
     }
   ]
 }

@@ -31,8 +31,9 @@ class TestCowcatcher(unittest.TestCase):
         provide minimal cowdef for test
         """
         return {
-            # Change Filters to {'Name':'tag:Name', 'Values':['*']} to restrict to named instances.
-            'InstanceFilters' : 'Filters=[]',
+            # Change InstanceFilters to {'Name':'tag:Name', 'Values':['foo*']}
+            #   if you want to restrict to named instances starting with foo.
+            'InstanceFilters' : None,
             'DiscoverInstance' : 'describe_instances',
             'Service' : 'ec2',
             'S3Suffix' : 'TeamFoo',
@@ -48,13 +49,13 @@ class TestCowcatcher(unittest.TestCase):
             'CowReportARN' : 'arn:aws:sns:REPLACE_REGION:REPLACE_ACCOUNT:CowReport',
             'CurrentMetric' : 'CPUUtilization',
             'CowKeyChecklist' : ['REPLACE_KEY1', 'REPLACE_KEY2'],
-            'CowActions' : [{'action': 'terminate', 'time_delta' : '-3 weeks',
+            'CowActions' : [{'action': 'terminate', 'time_delta' : '+3 weeks',
                              'api_pre': 'terminate_instances(InstanceIds=["',
                              'api_post': '"])'},
-                            {'action': 'stop', 'time_delta' : '-2 weeks',
+                            {'action': 'stop', 'time_delta' : '+2 weeks',
                              'api_pre': 'stop_instances(InstanceIds=["',
                              'api_post': '"])'},
-                            {'action': 'report', 'time_delta' : '-1 day',
+                            {'action': 'report', 'time_delta' : '+1 day',
                              'api_pre': None, 'api_post': None}]
         }
 
@@ -114,7 +115,7 @@ class TestCowcatcher(unittest.TestCase):
         insts = cowcatcher.get_service_instance_tags(test_client, test_info)
         self.assertGreaterEqual(len(insts), 2)
         for inst in insts:
-            self.assertIn('tagkeys', inst)
+            self.assertIn('tags', inst)
 
     def test_analyze_write_roundup(self):
         """
@@ -152,6 +153,7 @@ class TestCowcatcher(unittest.TestCase):
         test_info = self.cowinfo_helper()
         roundup = cowcatcher.load_roundup(self.Bucket, 'ec2_TeamFoo_test.json')
         report_text = cowcatcher.format_report(roundup, test_info)
+        # The length of report_text changes based on substitutions to test file
         self.assertEqual(len(report_text), 843)
         resp = cowcatcher.send_report(report_text, test_info, self.Now_str)
         self.assertEqual(resp.keys(), ['ResponseMetadata', 'MessageId'])

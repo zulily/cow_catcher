@@ -20,10 +20,10 @@
   "DiscoverTagsInstParm" : null,
 
   "CowKeyChecklist" : ["REPLACE_KEY1", "REPLACE_KEY2"],
-  "CowActions" : [{"action": "terminate", "time_delta" : "-2 months",
-                   "api_pre": "delete_auto_scaling_group(AutoScalingGroupName=['",
-                   "api_post": "'])"},
-                  {"action": "report", "time_delta" : "-1 day",
+  "CowActions" : [{"action": "terminate", "time_delta" : "+2 months",
+                   "api_pre": "delete_auto_scaling_group(AutoScalingGroupName='",
+                   "api_post": "')"},
+                  {"action": "report", "time_delta" : "+1 day",
                    "api_pre": null, "api_post": null}],
   "CreateServiceReport" : false,
   "CowReportARN" : "arn:aws:sns:REPLACE_REGION:REPLACE_ACCOUNT:CowReport"

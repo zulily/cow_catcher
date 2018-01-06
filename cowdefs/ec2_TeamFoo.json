@@ -5,7 +5,7 @@
 
   "S3Suffix" : "TeamFoo",
   "DiscoverInstance" : "describe_instances", 
-  "InstanceFilters" : "Filters=[]",
+  "InstanceFilters" : null,
   "InstanceIterator1" : "Reservations",
   "InstanceIterator2" : "Instances",
 
@@ -20,13 +20,13 @@
   "DiscoverTagsInstParm" : null,
 
   "CowKeyChecklist" : ["REPLACE_KEY1", "REPLACE_KEY2"],
-  "CowActions" : [{"action": "terminate", "time_delta" : "-5 weeks",
+  "CowActions" : [{"action": "terminate", "time_delta" : "+5 weeks",
                    "api_pre": "terminate_instances(InstanceIds=['",
 		   "api_post": "'])"},
-	          {"action": "stop", "time_delta" : "-4 weeks", 
+	          {"action": "stop", "time_delta" : "+4 weeks",
                    "api_pre": "stop_instances(InstanceIds=['",
 		   "api_post": "'])"},
-	          {"action": "report", "time_delta" : "-1 day", 
+	          {"action": "report", "time_delta" : "+1 day",
 	           "api_pre": null, "api_post": null}],
   "CreateServiceReport" : false,
   "CowReportARN" : "arn:aws:sns:REPLACE_REGION:REPLACE_ACCOUNT:CowReport"

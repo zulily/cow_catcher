@@ -4,7 +4,7 @@ cowcatcher worker
    Called by AWS Lambda to discover service instances
    which are then reported on and stopped/deleted.
 
-   Copyright 2017 zulily, Inc.
+   Copyright 2018 zulily, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ def handle_cows(new_cows, old_roundup, svc_client, svc_info, pdtcal, now_tm, now
             ninst['initial_discovery'] = now_str
             ninst['action_history'] = []
         for act in svc_info['CowActions']:
-            if s_time < pdtcal.parse(act['time_delta']):
+            if s_time > pdtcal.parse(act['time_delta']):
                 #Action triggered
                 summary[act['action']] += 1
                 act_comment = act['action']  + ' at ' + now_str
@@ -148,7 +148,8 @@ def analyze_service_instances(svc_inst, svc_info):
     badinstid = []
     for inst in svc_inst:
         for keyreq in svc_info['CowKeyChecklist']:
-            if keyreq not in inst['tagkeys'] and inst['id'] not in badinstid:
+            if keyreq not in inst['tags'] and \
+               inst['id'] not in badinstid:
                 badcows.append(inst)
                 badinstid.append(inst['id'])
 
@@ -173,11 +174,15 @@ def format_report(cow_list, svc_info):
             output += '\n    ID:      ' + cow['id']
             if cow['state']:
                 output += '\n      State:   ' + cow['state']
-            if cow['type']:
-                output += '\n      Type:    ' + cow['type']
+            if svc_info['InstType']:
+                if cow['type']:
+                    output += '\n      Type:    ' + cow['type']
             output += '\n      Found:   ' + cow['initial_discovery']
-            if cow['tagkeys']:
-                output += '\n      Tags:    ' + ', '.join(cow['tagkeys'])
+            if cow['tags']:
+                output += '\n      Tags:'
+                for tag in cow['tags']:
+                    output += '\n           '
+                    output += tag + ' : ' + cow['tags'][tag]
             if cow['action_history']:
                 output += '\n      History: '
                 for action in cow['action_history']:
@@ -191,9 +196,9 @@ def format_report(cow_list, svc_info):
 
 def get_tag_keys(key_list):
     """
-    Return a list of tag keys with non-null values
+    Return a dict of tags with non-null values
     """
-    return [i['Key'] for i in key_list if i['Value']]
+    return {i['Key']:i['Value'] for i in key_list if i['Value']}
 
 
 def discover_instance_tags(instances, svc_client, svc_info):
@@ -211,7 +216,12 @@ def discover_instance_tags(instances, svc_client, svc_info):
             tmp = inst[svc_info['InstStateParent']]
             if isinstance(tmp, list):
                 # handle autoscale, etc. by choosing first instance
-                tmp = tmp[0]
+                try:
+                    tmp = tmp[0]
+                except IndexError:
+                    tmp = {}
+                    tmp[svc_info['InstStateChild']] = 'NoInstances'
+
             stats['state'] = tmp[svc_info['InstStateChild']]
         else:
             stats['state'] = inst[svc_info['InstStateParent']]
@@ -223,18 +233,36 @@ def discover_instance_tags(instances, svc_client, svc_info):
             cmd += ')'
             response = eval(cmd)
             try:
-                stats['tagkeys'] = get_tag_keys(response[svc_info['TagsKey']])
+                stats['tags'] = get_tag_keys(response[svc_info['TagsKey']])
             except KeyError:
-                stats['tagkeys'] = []
+                stats['tags'] = {}
         else:
             try:
-                stats['tagkeys'] = get_tag_keys(inst[svc_info['TagsKey']])
+                stats['tags'] = get_tag_keys(inst[svc_info['TagsKey']])
             except KeyError:
-                stats['tagkeys'] = []
+                stats['tags'] = {}
 
         discoveries.append(stats)
 
     return discoveries
+
+def parse_service_response(response, inst_iter1, inst_iter2):
+    """
+    Handle paginated response from service
+    """
+    inst = []
+    if inst_iter2:
+        # Two levels of lists
+        for tmp in response[inst_iter1]:
+            for tmp2 in tmp[inst_iter2]:
+                inst.append(tmp2)
+    elif inst_iter1:
+        for tmp in response[inst_iter1]:
+            inst.append(tmp)
+    else:
+        inst = response
+        pass
+    return inst
 
 
 def get_service_instance_tags(svc_client, svc_info):
@@ -243,21 +271,16 @@ def get_service_instance_tags(svc_client, svc_info):
     Flattening AWS structure if necessary
     """
     instances = []
-    cmd = 'svc_client.' + svc_info['DiscoverInstance'] + '('
+
+    paginator = svc_client.get_paginator(svc_info['DiscoverInstance'])
     if svc_info['InstanceFilters']:
-        cmd += svc_info['InstanceFilters']
-    cmd += ')'
-    response = eval(cmd)
-    if svc_info['InstanceIterator2']:
-        # Two levels of lists
-        for tmp in response[svc_info['InstanceIterator1']]:
-            for tmp2 in tmp[svc_info['InstanceIterator2']]:
-                instances.append(tmp2)
-    elif svc_info['InstanceIterator1']:
-        for tmp in response[svc_info['InstanceIterator1']]:
-            instances.append(tmp)
+        for response in paginator.paginate(Filters=svc_info['InstanceFilters']):
+            instances.extend(parse_service_response(response, svc_info['InstanceIterator1'],
+                                                    svc_info['InstanceIterator2']))
     else:
-        instances = response
+        for response in paginator.paginate():
+            instances.extend(parse_service_response(response, svc_info['InstanceIterator1'],
+                                                    svc_info['InstanceIterator2']))
 
     return discover_instance_tags(instances, svc_client, svc_info)
 

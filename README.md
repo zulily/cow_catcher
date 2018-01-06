@@ -2,7 +2,7 @@
 ### Managing non-tagged service instances AWS
 
 Keeping track of your instances in AWS is quite a task. This tool (CowCatcher), run routinely from AWS Lambda, will detect your instances, and if they don't conform to given tag criteria, can report, stop, and/or delete them based on your time criteria.
-(Note: this approach assumes you are using the "cattle" approach in the AWS cloud [(link)](http://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/), and can easily recover from a deleted VM.)
+(Note: this approach is related to "cattle" approach in the AWS cloud [(link)](http://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/), and can easily recover from a deleted VM.)
 
 ## Setup
 There are a few things you need to do to set this up for yourself (see details below):  
@@ -31,7 +31,16 @@ CowCatcher uses AWS SNS to handle notifications of issues found during cow catch
 * Copy each service you want to check (e.g., `ec2_TeamFoo.json`) to a new filename (referencing it in the `team.json` `CowDefs` list.)  In the new file, modify:
 
  - `InstanceFilters` : If your instances have names, add `tag:Name` key's values if you want to restrict tag analysis to a subset of instances.  (If you do this, you also should to change the `S3Suffix` to keep CowCatcher data files separate.) Example:
-	 - `"Filters=[{'Name':'tag:Name', 'Values':['hadoop*']},{'Name':'instance-state-name', 'Values':['running']}]"`
+`   "InstanceFilters" : [ 
+      {
+          "Name": "tag:Name", 
+          "Values":["foo*"]
+      },
+      {
+          "Name":"instance-state-name",
+          "Values":["running"]
+      } 
+  ]`
  - `CowKeyChecklist` : Modify to include the list of all mandatory instance tags for the given service, replacing/adding to `REPLACE_KEY1` and `REPLACE_KEY2`.
  - `CowActions` : This list defines the actions that are taken for all instances found which don't have the mandatory keys defined in `CowKeyChecklist`. 
 	 - Remove any action (i.e., ` {"action": "terminate", .. "api_post": *"}`) that is inappropriate for your environment! For example, remove the `terminate` action in the `rds_*.json` if you don't want to terminate RDS instances. 

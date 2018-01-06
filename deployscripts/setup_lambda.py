@@ -4,7 +4,7 @@ setup_lambda script
    Used to deploy python app to AWS Lambda, creating roles needed and
    pushing the script to AWS Lambda.
 
-   Copyright 2017 zulily, Inc.
+   Copyright 2018 zulily, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ LAMBDA_C = boto3.client('lambda')
 EVENTS_C = boto3.client('events')
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-SVC_ACCESS = ['ec2_access', 'sns_access', 'rds_access',
+SVC_ACCESS = ['cloudwatch_access','ec2_access', 'sns_access', 'rds_access',
               'as_access', 's3_access']
 
 def setup_iam_role():
@@ -115,7 +115,7 @@ def upload_lambda_function():
                                                Runtime='python2.7',
                                                Role=role.arn,
                                                Handler='cowcatcher.main',
-                                               Timeout=30,
+                                               Timeout=300,
                                                Description="Report, stop, kill cows (instances)",
                                                MemorySize=128,
                                                VpcConfig=vpc_config)
