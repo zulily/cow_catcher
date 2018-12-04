@@ -158,3 +158,13 @@ class TestCowcatcher(unittest.TestCase):
         resp = cowcatcher.send_report(report_text, test_info, self.Now_str)
         self.assertEqual(resp.keys(), ['ResponseMetadata', 'MessageId'])
 
+    def test_get_cloudtrail_username(self):
+        """
+        Test the method that retrieves username from cloudtrail
+        """
+        test_info = self.cowinfo_helper()
+        test_client = boto3.client(test_info['Service'])
+        tags = cowcatcher.get_service_instance_tags(test_client, test_info)
+        username = cowcatcher.get_cloudtrail_username(tags[0]['id'])
+        self.assertGreaterEqual(len(username), 3)
+

@@ -34,6 +34,7 @@ Logger.setLevel(logging.INFO)
 
 S3_C = boto3.client('s3')
 SNS_C = boto3.client('sns')
+CLDTRL_C = boto3.client('cloudtrail')
 
 # services cowcatcher has permission to search/delete
 SERVICE_LIST = ['ec2', 'rds', 'autoscaling']
@@ -51,8 +52,8 @@ def load_definition_file(file_name):
             mydict = json.load(deffile)
     except ValueError as error:
         mydict = ""
-        Logger.warning('Failed to load ' + file_name)
-        Logger.critical('Critical Error: ' + str(error))
+        Logger.warning('Failed to load file: %s', file_name)
+        Logger.critical('Critical Error: %s', str(error))
     return mydict
 
 
@@ -66,7 +67,7 @@ def load_roundup(bucket, filename):
         cows = json.loads(last_str)
     except ClientError as err:
         if err.response['Error']['Code'] == "NoSuchKey":
-            Logger.warning('No file found:' + filename)
+            Logger.warning('No file found: %s', filename)
             cows = []
         else:
             raise
@@ -150,6 +151,7 @@ def analyze_service_instances(svc_inst, svc_info):
         for keyreq in svc_info['CowKeyChecklist']:
             if keyreq not in inst['tags'] and \
                inst['id'] not in badinstid:
+                inst['username'] = get_cloudtrail_username(inst['id'])
                 badcows.append(inst)
                 badinstid.append(inst['id'])
 
@@ -172,6 +174,8 @@ def format_report(cow_list, svc_info):
         output += '\n  Untagged instances: '
         for cow in cow_list['cows']:
             output += '\n    ID:      ' + cow['id']
+            if 'username' in cow and cow['username']:
+                output += '\n      User:   ' + cow['username']
             if cow['state']:
                 output += '\n      State:   ' + cow['state']
             if svc_info['InstType']:
@@ -261,7 +265,7 @@ def parse_service_response(response, inst_iter1, inst_iter2):
             inst.append(tmp)
     else:
         inst = response
-        pass
+
     return inst
 
 
@@ -283,6 +287,29 @@ def get_service_instance_tags(svc_client, svc_info):
                                                     svc_info['InstanceIterator2']))
 
     return discover_instance_tags(instances, svc_client, svc_info)
+
+
+def get_cloudtrail_username(rsc_name):
+    """
+    Given resource name, search cloudtrail for oldest record, return username
+    associated with record.
+    """
+    username = ''
+    events = []
+
+    lookup = [{'AttributeKey':'ResourceName',
+               'AttributeValue': rsc_name}]
+    paginator = CLDTRL_C.get_paginator('lookup_events')
+    # walk through all records. This should only happen for new instances.
+    for response in paginator.paginate(LookupAttributes=lookup):
+        events.extend(response['Events'])
+    for event in events[::-1]:
+        # Find a non-empty username
+        if 'Username' in event and event['Username']:
+            username = event['Username']
+            break
+
+    return username
 
 
 def main(event, context):
@@ -307,7 +334,7 @@ def main(event, context):
         try:
             svc_client = boto3.client(svc_info['Service'])
         except UnknownServiceError:
-            Logger.critical('Service unknown to AWS API:' + svc_info['Service'])
+            Logger.critical('Service unknown to AWS API: %s', svc_info['Service'])
 
         if svc_info['Service'] in SERVICE_LIST:
             inst_tags = get_service_instance_tags(svc_client, svc_info)
@@ -318,7 +345,7 @@ def main(event, context):
                                       pdtcal, now_tm, now_str)
             http_status = save_roundup(new_roundup, team_info['Bucket'], cowfile)
             if http_status <> 200:
-                Logger.error('Unable to write roundup file:' + cowfile)
+                Logger.error('Unable to write roundup file: %s', cowfile)
 
             report_text = format_report(new_roundup, svc_info)
             all_issues += report_text

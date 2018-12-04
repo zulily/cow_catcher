@@ -32,7 +32,7 @@ EVENTS_C = boto3.client('events')
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 SVC_ACCESS = ['cloudwatch_access','ec2_access', 'sns_access', 'rds_access',
-              'as_access', 's3_access']
+              'as_access', 's3_access', 'cloudtrail_access']
 
 def setup_iam_role():
     """
