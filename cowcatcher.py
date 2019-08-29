@@ -4,7 +4,7 @@ cowcatcher worker
    Called by AWS Lambda to discover service instances
    which are then reported on and stopped/deleted.
 
-   Copyright 2018 zulily, Inc.
+   Copyright 2019 zulily, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -317,6 +317,7 @@ def main(event, context):
     Main functionality
     """
     all_issues = ''
+    herd_exist = False
 
     cons = pdt.Constants()
     cons.YearParseStyle = 0
@@ -329,6 +330,7 @@ def main(event, context):
     for svc in team_info['CowDefs']:
 
         svc_info = load_definition_file(DEFS_PATH + svc)
+        cows_exist = False
 
         #   Ensure API exists for service
         try:
@@ -347,15 +349,19 @@ def main(event, context):
             if http_status <> 200:
                 Logger.error('Unable to write roundup file: %s', cowfile)
 
+            if new_roundup['cows']:
+                cows_exist = True
+                herd_exist = True
+
             report_text = format_report(new_roundup, svc_info)
             all_issues += report_text
-            if svc_info['CreateServiceReport']:
+            if svc_info['CreateServiceReport'] and cows_exist:
                 send_report(report_text, svc_info, now_str)
         else:
             Logger.warning('No permissions for retrieving instances. Service: ')
             Logger.warning(svc_info['Service'])
 
-    if team_info['CreateTeamReport']:
+    if team_info['CreateTeamReport'] and herd_exist:
         send_report(all_issues, svc_info, now_str)
 
 
